@@ -5,10 +5,7 @@ import io
 
 # Initialize products
 if 'products' not in st.session_state:
-    st.session_state.products = [
-        "Gingerly Oil", "Groundnut Oil", "Coconut Oil", "Cow Ghee",
-        "Cow Butter", "Buffalo Butter", "Deebam Oil", "Vadagam"
-    ]
+    st.session_state.products = []
 
 # App title
 st.title("🛒 Om Guru Store - Billing App")
@@ -16,27 +13,13 @@ st.write(f"Date: {datetime.date.today().strftime('%d-%m-%Y')}")
 
 # Add new product
 new_product = st.text_input("Add a new product (optional):")
-if new_product and new_product not in st.session_state.products:
-    st.session_state.products.append(new_product)
+if new_product:
+    if new_product not in st.session_state.products:
+        st.session_state.products.append(new_product)
 
-# Edit and delete products
-st.subheader("Manage Products")
-product_to_edit = st.selectbox("Select a product to edit or delete", st.session_state.products)
-edit_product = st.text_input("Edit product name:", value=product_to_edit)
-if st.button("Save Changes"):
-    if edit_product:
-        idx = st.session_state.products.index(product_to_edit)
-        st.session_state.products[idx] = edit_product
-        st.success(f"Product '{product_to_edit}' has been updated to '{edit_product}'")
-
-if st.button("Delete Product"):
-    if product_to_edit:
-        st.session_state.products.remove(product_to_edit)
-        st.success(f"Product '{product_to_edit}' has been deleted")
-
+# Input fields for products
 st.header("Enter Product Details:")
 
-# Input product quantities and prices
 bill_items = {}
 for product in st.session_state.products:
     qty = st.number_input(f"{product} - Quantity", min_value=0, step=1, key=f"{product}_qty")
@@ -95,7 +78,7 @@ if st.button("Generate & Share Bill"):
     img_buffer.seek(0)
 
     # Show Share Options after click
-    share_option = st.selectbox("Select Share Method:", ["WhatsApp", "Gmail", "Others"])
+    share_option = st.selectbox("Select Share Method:", ["WhatsApp", "Gmail", "Copy Text"])
 
     # Collect phone/email for sharing
     phone_or_email = st.text_input("Enter Phone (with country code) or Email:")
@@ -113,7 +96,7 @@ if st.button("Generate & Share Bill"):
                 gmail_url = f"mailto:{phone_or_email}?subject=Om%20Guru%20Store%20Bill&body={bill_result}"
                 st.markdown(f"[Click here to Share via Gmail]({gmail_url})", unsafe_allow_html=True)
 
-            else:  # Others
+            elif share_option == "Copy Text":
                 st.markdown("Copy this bill text and paste manually into other apps:")
                 st.code(bill_result)
 
