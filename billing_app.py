@@ -94,50 +94,33 @@ if st.button("Generate & Share Bill"):
     img.save(img_buffer, format="WEBP", quality=40)  # WEBP instead of JPEG
     img_buffer.seek(0)
 
-    # Conditional Flow for Share/Download
-    if 'share_clicked' not in st.session_state:
-        st.session_state.share_clicked = False
-
     # Show Share Options after click
-    if st.button("📤 Share Bill"):
-        st.session_state.share_clicked = True
+    share_option = st.selectbox("Select Share Method:", ["WhatsApp", "Gmail", "Others"])
 
-    if st.session_state.share_clicked:
-        # Show Share Options after clicking "Share"
-        st.markdown("### Choose How to Share:")
+    # Collect phone/email for sharing
+    phone_or_email = st.text_input("Enter Phone (with country code) or Email:")
 
-        # Share method selection
-        share_option = st.selectbox("Select Share Method:", ["WhatsApp", "Gmail", "Others"])
-
-        phone_or_email = st.text_input("Enter Phone (with country code) or Email:")
-
-        if 'bill_result' in locals():
-            share_message = bill_result.replace(' ', '%20').replace('\n', '%0A')
-
-            if st.button("Generate Share Link"):
-                if not phone_or_email:
-                    st.error("Please enter a Phone number or Email address.")
-                else:
-                    if share_option == "WhatsApp":
-                        whatsapp_url = f"https://api.whatsapp.com/send?phone={phone_or_email}&text={share_message}"
-                        st.markdown(f"[Click here to Share on WhatsApp]({whatsapp_url})", unsafe_allow_html=True)
-
-                    elif share_option == "Gmail":
-                        gmail_url = f"mailto:{phone_or_email}?subject=Om%20Guru%20Store%20Bill&body={share_message}"
-                        st.markdown(f"[Click here to Share via Gmail]({gmail_url})", unsafe_allow_html=True)
-
-                    else:  # Others
-                        st.markdown("Copy this bill text and paste manually into other apps:")
-                        st.code(bill_result)
-
+    # Generate Shareable Link
+    if st.button("Generate Share Link"):
+        if not phone_or_email:
+            st.error("Please enter a Phone number or Email address.")
         else:
-            st.error("Please generate the bill first.")
+            if share_option == "WhatsApp":
+                whatsapp_url = f"https://api.whatsapp.com/send?phone={phone_or_email}&text={bill_result}"
+                st.markdown(f"[Click here to Share on WhatsApp]({whatsapp_url})", unsafe_allow_html=True)
 
-    # If user denies sharing, allow download
-    if not st.session_state.share_clicked:
-        st.download_button(
-            label="Download Compressed Bill as WEBP",
-            data=img_buffer.getvalue(),
-            file_name="bill.webp",
-            mime="image/webp"
-        )
+            elif share_option == "Gmail":
+                gmail_url = f"mailto:{phone_or_email}?subject=Om%20Guru%20Store%20Bill&body={bill_result}"
+                st.markdown(f"[Click here to Share via Gmail]({gmail_url})", unsafe_allow_html=True)
+
+            else:  # Others
+                st.markdown("Copy this bill text and paste manually into other apps:")
+                st.code(bill_result)
+
+    # If user does not want to share, show download button
+    st.download_button(
+        label="Download Compressed Bill as WEBP",
+        data=img_buffer.getvalue(),
+        file_name="bill.webp",
+        mime="image/webp"
+    )
