@@ -5,14 +5,8 @@ import io
 
 # Initialize products
 products = [
-    "Gingerly Oil",
-    "Groundnut Oil",
-    "Coconut Oil",
-    "Cow Ghee",
-    "Cow Butter",
-    "Buffalo Butter",
-    "Deebam Oil",
-    "Vadagam"
+    "Gingerly Oil", "Groundnut Oil", "Coconut Oil", "Cow Ghee",
+    "Cow Butter", "Buffalo Butter", "Deebam Oil", "Vadagam"
 ]
 
 # App title
@@ -35,9 +29,8 @@ for product in products:
         total_price = qty * price_per_unit
         bill_items[product] = (qty, price_per_unit, total_price)
 
-# Function to create JPG from bill
+# Function to create Image from bill
 def create_bill_image(bill_text):
-    # Dynamically adjust height based on number of lines
     lines = bill_text.count('\n') + 1
     height = max(1000, 40 * lines)
     width = 800
@@ -45,13 +38,11 @@ def create_bill_image(bill_text):
     img = Image.new('RGB', (width, height), color='white')
     d = ImageDraw.Draw(img)
 
-    # Set font
     try:
         font = ImageFont.truetype("arial.ttf", 20)
     except:
         font = ImageFont.load_default()
 
-    # Write text
     y_text = 20
     for line in bill_text.split('\n'):
         d.text((40, y_text), line, font=font, fill=(0, 0, 0))
@@ -79,42 +70,45 @@ if st.button("Generate Bill"):
     bill_result = "\n".join(bill_text)
     st.text(bill_result)
 
-    # --- Create JPG Image ---
+    # --- Create Image ---
     img = create_bill_image(bill_result)
 
-    # Save to buffer (COMPRESSED)
+    # Save to buffer (WEBP - compressed)
     img_buffer = io.BytesIO()
-    img.save(img_buffer, format="JPEG", quality=40)  # COMPRESSION set here
+    img.save(img_buffer, format="WEBP", quality=40)  # WEBP instead of JPEG
     img_buffer.seek(0)
 
     st.download_button(
-        label="Download Compressed Bill as JPG",
+        label="Download Compressed Bill as WEBP",
         data=img_buffer.getvalue(),
-        file_name="bill.jpg",
-        mime="image/jpeg"
+        file_name="bill.webp",
+        mime="image/webp"
     )
 
-    # --- Share Section ---
-    st.markdown("### 📲 Share the Bill")
+    # --- Share Button: Show only after click ---
+    if st.button("📤 Share Bill"):
+        # Show Share Options after clicking "Share"
+        st.markdown("### Choose How to Share:")
 
-    share_option = st.selectbox("Choose Share Method:", ["WhatsApp", "Gmail", "Others"])
+        # Share method selection
+        share_option = st.selectbox("Select Share Method:", ["WhatsApp", "Gmail", "Others"])
 
-    phone_or_email = st.text_input("Enter Phone (with country code) or Email:")
+        phone_or_email = st.text_input("Enter Phone (with country code) or Email:")
 
-    share_message = bill_result.replace(' ', '%20').replace('\n', '%0A')
+        share_message = bill_result.replace(' ', '%20').replace('\n', '%0A')
 
-    if st.button("Generate Share Link"):
-        if not phone_or_email:
-            st.error("Please enter a Phone number or Email address.")
-        else:
-            if share_option == "WhatsApp":
-                whatsapp_url = f"https://api.whatsapp.com/send?phone={phone_or_email}&text={share_message}"
-                st.markdown(f"[Click here to Share on WhatsApp]({whatsapp_url})", unsafe_allow_html=True)
+        if st.button("Generate Share Link"):
+            if not phone_or_email:
+                st.error("Please enter a Phone number or Email address.")
+            else:
+                if share_option == "WhatsApp":
+                    whatsapp_url = f"https://api.whatsapp.com/send?phone={phone_or_email}&text={share_message}"
+                    st.markdown(f"[Click here to Share on WhatsApp]({whatsapp_url})", unsafe_allow_html=True)
 
-            elif share_option == "Gmail":
-                gmail_url = f"mailto:{phone_or_email}?subject=Om%20Guru%20Store%20Bill&body={share_message}"
-                st.markdown(f"[Click here to Share via Gmail]({gmail_url})", unsafe_allow_html=True)
+                elif share_option == "Gmail":
+                    gmail_url = f"mailto:{phone_or_email}?subject=Om%20Guru%20Store%20Bill&body={share_message}"
+                    st.markdown(f"[Click here to Share via Gmail]({gmail_url})", unsafe_allow_html=True)
 
-            else:  # Others
-                st.markdown("Copy this bill text and paste manually into other apps:")
-                st.code(bill_result)
+                else:  # Others
+                    st.markdown("Copy this bill text and paste manually into other apps:")
+                    st.code(bill_result)
