@@ -1,6 +1,7 @@
 import streamlit as st
 import datetime
-from fpdf import FPDF
+from PIL import Image, ImageDraw, ImageFont
+import io
 
 # Initialize products
 products = [
@@ -34,33 +35,26 @@ for product in products:
         total_price = qty * price_per_unit
         bill_items[product] = (qty, price_per_unit, total_price)
 
-# --- PDF generation class ---
-class PDF(FPDF):
-    def header(self):
-        self.set_font('Arial', 'B', 16)
-        self.cell(0, 10, 'Om Guru Store', ln=True, align='C')
-        self.ln(5)
-        self.set_font('Arial', '', 12)
-        self.cell(0, 10, f'Date: {datetime.date.today().strftime("%d-%m-%Y")}', ln=True, align='C')
-        self.ln(10)
+# Function to create JPG from bill
+def create_bill_image(bill_text):
+    # Create blank white image
+    width, height = 800, 1000
+    img = Image.new('RGB', (width, height), color='white')
+    d = ImageDraw.Draw(img)
 
-    def bill_table(self, bill_items, total):
-        self.set_font('Arial', 'B', 12)
-        self.cell(70, 10, 'Product', 1)
-        self.cell(30, 10, 'Qty', 1, align='C')
-        self.cell(40, 10, 'Unit Price', 1, align='C')
-        self.cell(40, 10, 'Total', 1, ln=True, align='C')
+    # Set font
+    try:
+        font = ImageFont.truetype("arial.ttf", 20)
+    except:
+        font = ImageFont.load_default()
 
-        self.set_font('Arial', '', 12)
-        for product, (qty, price, line_total) in bill_items.items():
-            self.cell(70, 10, product, 1)
-            self.cell(30, 10, str(qty), 1, align='C')
-            self.cell(40, 10, f"{price:.2f}", 1, align='C')
-            self.cell(40, 10, f"{line_total:.2f}", 1, ln=True, align='C')
+    # Write text
+    y_text = 20
+    for line in bill_text.split('\n'):
+        d.text((40, y_text), line, font=font, fill=(0, 0, 0))
+        y_text += 30
 
-        self.set_font('Arial', 'B', 12)
-        self.cell(140, 10, 'Total', 1)
-        self.cell(40, 10, f"{total:.2f}", 1, ln=True, align='C')
+    return img
 
 # Generate Bill
 if st.button("Generate Bill"):
@@ -82,18 +76,19 @@ if st.button("Generate Bill"):
     bill_result = "\n".join(bill_text)
     st.text(bill_result)
 
-    # --- PDF Creation ---
-    pdf = PDF()
-    pdf.add_page()
-    pdf.bill_table(bill_items, total)
-
-    pdf_output = pdf.output(dest='S').encode('latin-1')
+    # --- Create JPG Image ---
+    img = create_bill_image(bill_result)
+    
+    # Save to buffer
+    img_buffer = io.BytesIO()
+    img.save(img_buffer, format="JPEG")
+    img_buffer.seek(0)
 
     st.download_button(
-        label="Download Bill as PDF",
-        data=pdf_output,
-        file_name="bill.pdf",
-        mime="application/pdf"
+        label="Download Bill as JPG",
+        data=img_buffer,
+        file_name="bill.jpg",
+        mime="image/jpeg"
     )
 
     # --- WhatsApp Share Section ---
@@ -109,6 +104,4 @@ if st.button("Generate Bill"):
         else:
             st.error("Please enter a valid phone number.")
 
-    # Suggestion for Android users: They can choose contact after link opens
     st.info("📱 Tip: After clicking the link, you can choose the contact from your WhatsApp app.")
-
