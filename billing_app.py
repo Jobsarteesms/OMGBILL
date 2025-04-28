@@ -57,15 +57,15 @@ if st.button("Generate Bill"):
     bill_text = []
     bill_text.append(f"------ Om Guru Store ------")
     bill_text.append(f"Date: {datetime.date.today().strftime('%d-%m-%Y')}")
-    bill_text.append("-" * 40)
-    bill_text.append(f"{'Product':20} {'Qty':>5} {'Unit':>6} {'Total':>8}")
-    bill_text.append("-" * 40)
+    bill_text.append("-" * 60)
+    bill_text.append(f"{'Product':30} {'Qty':>10} {'Unit Price':>15} {'Total':>15}")
+    bill_text.append("-" * 60)
     for product, (qty, price, line_total) in bill_items.items():
-        bill_text.append(f"{product:20} {qty:5} {price:6.2f} {line_total:8.2f}")
+        bill_text.append(f"{product:30} {qty:10} {price:15.2f} {line_total:15.2f}")
         total += line_total
-    bill_text.append("-" * 40)
-    bill_text.append(f"{'Total':30} {total:8.2f}")
-    bill_text.append("-" * 40)
+    bill_text.append("-" * 60)
+    bill_text.append(f"{'Total':50} {total:15.2f}")
+    bill_text.append("-" * 60)
 
     bill_result = "\n".join(bill_text)
     st.text(bill_result)
@@ -85,30 +85,40 @@ if st.button("Generate Bill"):
         mime="image/webp"
     )
 
-    # --- Share Button: Show only after click ---
-    if st.button("📤 Share Bill"):
-        # Show Share Options after clicking "Share"
-        st.markdown("### Choose How to Share:")
+# Share functionality using session state
+if 'share_clicked' not in st.session_state:
+    st.session_state.share_clicked = False
 
-        # Share method selection
-        share_option = st.selectbox("Select Share Method:", ["WhatsApp", "Gmail", "Others"])
+def show_share_options():
+    st.session_state.share_clicked = True
 
-        phone_or_email = st.text_input("Enter Phone (with country code) or Email:")
+# Share Button: Show only after click
+if st.button("📤 Share Bill"):
+    show_share_options()
 
-        share_message = bill_result.replace(' ', '%20').replace('\n', '%0A')
+if st.session_state.share_clicked:
+    # Show Share Options after clicking "Share"
+    st.markdown("### Choose How to Share:")
 
-        if st.button("Generate Share Link"):
-            if not phone_or_email:
-                st.error("Please enter a Phone number or Email address.")
-            else:
-                if share_option == "WhatsApp":
-                    whatsapp_url = f"https://api.whatsapp.com/send?phone={phone_or_email}&text={share_message}"
-                    st.markdown(f"[Click here to Share on WhatsApp]({whatsapp_url})", unsafe_allow_html=True)
+    # Share method selection
+    share_option = st.selectbox("Select Share Method:", ["WhatsApp", "Gmail", "Others"])
 
-                elif share_option == "Gmail":
-                    gmail_url = f"mailto:{phone_or_email}?subject=Om%20Guru%20Store%20Bill&body={share_message}"
-                    st.markdown(f"[Click here to Share via Gmail]({gmail_url})", unsafe_allow_html=True)
+    phone_or_email = st.text_input("Enter Phone (with country code) or Email:")
 
-                else:  # Others
-                    st.markdown("Copy this bill text and paste manually into other apps:")
-                    st.code(bill_result)
+    share_message = bill_result.replace(' ', '%20').replace('\n', '%0A')
+
+    if st.button("Generate Share Link"):
+        if not phone_or_email:
+            st.error("Please enter a Phone number or Email address.")
+        else:
+            if share_option == "WhatsApp":
+                whatsapp_url = f"https://api.whatsapp.com/send?phone={phone_or_email}&text={share_message}"
+                st.markdown(f"[Click here to Share on WhatsApp]({whatsapp_url})", unsafe_allow_html=True)
+
+            elif share_option == "Gmail":
+                gmail_url = f"mailto:{phone_or_email}?subject=Om%20Guru%20Store%20Bill&body={share_message}"
+                st.markdown(f"[Click here to Share via Gmail]({gmail_url})", unsafe_allow_html=True)
+
+            else:  # Others
+                st.markdown("Copy this bill text and paste manually into other apps:")
+                st.code(bill_result)
