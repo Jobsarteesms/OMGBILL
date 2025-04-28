@@ -84,9 +84,10 @@ if st.button("Generate Bill"):
     img.save(img_buffer, format="JPEG")
     img_buffer.seek(0)
 
+    # download_button needs bytes, so provide img_buffer.getvalue()
     st.download_button(
         label="Download Bill as JPG",
-        data=img_buffer,
+        data=img_buffer.getvalue(),  # Correct way
         file_name="bill.jpg",
         mime="image/jpeg"
     )
