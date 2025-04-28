@@ -37,8 +37,11 @@ for product in products:
 
 # Function to create JPG from bill
 def create_bill_image(bill_text):
-    # Create blank white image
-    width, height = 800, 1000
+    # Dynamically adjust height based on number of lines
+    lines = bill_text.count('\n') + 1
+    height = max(1000, 40 * lines)
+    width = 800
+
     img = Image.new('RGB', (width, height), color='white')
     d = ImageDraw.Draw(img)
 
@@ -78,31 +81,40 @@ if st.button("Generate Bill"):
 
     # --- Create JPG Image ---
     img = create_bill_image(bill_result)
-    
-    # Save to buffer
+
+    # Save to buffer (COMPRESSED)
     img_buffer = io.BytesIO()
-    img.save(img_buffer, format="JPEG")
+    img.save(img_buffer, format="JPEG", quality=40)  # COMPRESSION set here
     img_buffer.seek(0)
 
-    # download_button needs bytes, so provide img_buffer.getvalue()
     st.download_button(
-        label="Download Bill as JPG",
-        data=img_buffer.getvalue(),  # Correct way
+        label="Download Compressed Bill as JPG",
+        data=img_buffer.getvalue(),
         file_name="bill.jpg",
         mime="image/jpeg"
     )
 
-    # --- WhatsApp Share Section ---
-    st.markdown("### 📲 Share on WhatsApp")
+    # --- Share Section ---
+    st.markdown("### 📲 Share the Bill")
 
-    phone_number = st.text_input("Enter WhatsApp Number (with country code, e.g., +91...)")
+    share_option = st.selectbox("Choose Share Method:", ["WhatsApp", "Gmail", "Others"])
 
-    message = bill_result.replace(' ', '%20').replace('\n', '%0A')  # WhatsApp formatting
-    if st.button("Generate WhatsApp Link"):
-        if phone_number:
-            whatsapp_url = f"https://api.whatsapp.com/send?phone={phone_number}&text={message}"
-            st.markdown(f"[Click here to Share on WhatsApp]({whatsapp_url})", unsafe_allow_html=True)
+    phone_or_email = st.text_input("Enter Phone (with country code) or Email:")
+
+    share_message = bill_result.replace(' ', '%20').replace('\n', '%0A')
+
+    if st.button("Generate Share Link"):
+        if not phone_or_email:
+            st.error("Please enter a Phone number or Email address.")
         else:
-            st.error("Please enter a valid phone number.")
+            if share_option == "WhatsApp":
+                whatsapp_url = f"https://api.whatsapp.com/send?phone={phone_or_email}&text={share_message}"
+                st.markdown(f"[Click here to Share on WhatsApp]({whatsapp_url})", unsafe_allow_html=True)
 
-    st.info("📱 Tip: After clicking the link, you can choose the contact from your WhatsApp app.")
+            elif share_option == "Gmail":
+                gmail_url = f"mailto:{phone_or_email}?subject=Om%20Guru%20Store%20Bill&body={share_message}"
+                st.markdown(f"[Click here to Share via Gmail]({gmail_url})", unsafe_allow_html=True)
+
+            else:  # Others
+                st.markdown("Copy this bill text and paste manually into other apps:")
+                st.code(bill_result)
