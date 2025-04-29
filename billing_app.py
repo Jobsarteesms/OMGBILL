@@ -85,10 +85,12 @@ if st.button("Generate Bill"):
         mime="image/webp"
     )
 
-    # --- Share Button ---
+    # --- Share Button: Show only after click ---
     if st.button("📤 Share Bill"):
-        # Show only after click
+        # Show Share Options after clicking "Share"
         st.markdown("### Choose How to Share:")
+
+        # Share method selection
         share_option = st.selectbox("Select Share Method:", ["WhatsApp", "Gmail", "Others"])
 
         phone_or_email = st.text_input("Enter Phone (with country code) or Email:")
