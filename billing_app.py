@@ -2,6 +2,7 @@ import streamlit as st
 import datetime
 from PIL import Image, ImageDraw, ImageFont
 import io
+import pyperclip  # Added for clipboard functionality
 
 # --- Initialize session state ---
 if "products" not in st.session_state:
@@ -124,25 +125,35 @@ if st.button("Generate Bill"):
         mime="image/webp"
     )
 
-    # --- Share Option ---
-    if st.button("📤 Share Bill"):
-        st.markdown("### Choose How to Share:")
+    # --- Updated Share Option ---
+    st.subheader("📤 Share Bill")
 
-        share_option = st.selectbox("Select Share Method:", ["WhatsApp", "Gmail", "Others"])
-        phone_or_email = st.text_input("Enter Phone (with country code) or Email:")
+    bill_text_to_share = result
 
-        share_message = result.replace(' ', '%20').replace('\n', '%0A')
+    # Copy to Clipboard Button
+    if st.button("Copy Bill to Clipboard"):
+        try:
+            pyperclip.copy(bill_text_to_share)
+            st.success("Bill copied to clipboard! Now open WhatsApp, Email or Messages and Paste.")
+        except Exception as e:
+            st.warning("Copying not supported in this environment. Please manually copy below.")
 
-        if st.button("Generate Share Link"):
-            if not phone_or_email:
-                st.error("Please enter a Phone number or Email address.")
-            else:
-                if share_option == "WhatsApp":
-                    whatsapp_url = f"https://api.whatsapp.com/send?phone={phone_or_email}&text={share_message}"
-                    st.markdown(f"[Click here to Share on WhatsApp]({whatsapp_url})", unsafe_allow_html=True)
-                elif share_option == "Gmail":
-                    gmail_url = f"mailto:{phone_or_email}?subject=Om%20Guru%20Store%20Bill&body={share_message}"
-                    st.markdown(f"[Click here to Share via Gmail]({gmail_url})", unsafe_allow_html=True)
-                else:
-                    st.markdown("Copy this bill text and paste manually into other apps:")
-                    st.code(result)
+    # Always show text area for manual copy
+    st.text_area("Bill Text (Copy manually if needed):", bill_text_to_share, height=300)
+
+    st.markdown("### 📱 Choose an App to Paste the Bill:")
+
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.markdown("[![WhatsApp](https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg)](https://wa.me/)", unsafe_allow_html=True)
+        st.caption("Open WhatsApp")
+
+    with col2:
+        st.markdown("[![Gmail](https://upload.wikimedia.org/wikipedia/commons/4/4e/Gmail_Icon.png)](mailto:)", unsafe_allow_html=True)
+        st.caption("Open Gmail")
+
+    with col3:
+        st.markdown("[![Messages](https://upload.wikimedia.org/wikipedia/commons/8/83/SMS_Icon.png)](sms:)", unsafe_allow_html=True)
+        st.caption("Open SMS/Messages")
+
+    st.info("✅ After copying, open your favorite app, paste the bill text and send it.")
