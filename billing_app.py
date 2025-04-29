@@ -2,7 +2,6 @@ import streamlit as st
 import datetime
 from PIL import Image, ImageDraw, ImageFont
 import io
-import pyperclip  # Added for clipboard functionality
 
 # --- Initialize session state ---
 if "products" not in st.session_state:
@@ -125,21 +124,11 @@ if st.button("Generate Bill"):
         mime="image/webp"
     )
 
-    # --- Updated Share Option ---
+    # --- Share Option without pyperclip ---
     st.subheader("📤 Share Bill")
 
-    bill_text_to_share = result
-
-    # Copy to Clipboard Button
-    if st.button("Copy Bill to Clipboard"):
-        try:
-            pyperclip.copy(bill_text_to_share)
-            st.success("Bill copied to clipboard! Now open WhatsApp, Email or Messages and Paste.")
-        except Exception as e:
-            st.warning("Copying not supported in this environment. Please manually copy below.")
-
-    # Always show text area for manual copy
-    st.text_area("Bill Text (Copy manually if needed):", bill_text_to_share, height=300)
+    st.write("📋 **Copy the Bill Text Below:**")
+    st.text_area("Bill Text (Select and Copy manually):", result, height=300)
 
     st.markdown("### 📱 Choose an App to Paste the Bill:")
 
@@ -156,4 +145,4 @@ if st.button("Generate Bill"):
         st.markdown("[![Messages](https://upload.wikimedia.org/wikipedia/commons/8/83/SMS_Icon.png)](sms:)", unsafe_allow_html=True)
         st.caption("Open SMS/Messages")
 
-    st.info("✅ After copying, open your favorite app, paste the bill text and send it.")
+    st.info("✅ After copying the bill, paste it into WhatsApp, Gmail, or Messages.")
