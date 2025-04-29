@@ -1,7 +1,7 @@
 import streamlit as st
 import datetime
 
-# --- Initialize session state ---
+# --- Initialize products ---
 if "products" not in st.session_state:
     st.session_state.products = [
         "Gingerly Oil", "Groundnut Oil", "Coconut Oil", "Cow Ghee",
@@ -10,11 +10,20 @@ if "products" not in st.session_state:
 if "new_product_added" not in st.session_state:
     st.session_state.new_product_added = False
 
-# --- Title ---
+# --- Handle reset before any widgets ---
+if "reset" in st.session_state and st.session_state.reset:
+    for product in st.session_state.products:
+        st.session_state[f"{product}_qty"] = 0
+        st.session_state[f"{product}_unit_type"] = ""
+        st.session_state[f"{product}_price"] = 0.0
+    st.session_state.reset = False
+    st.experimental_rerun()
+
+# --- Title and Date ---
 st.title("🧾 Om Guru Store - Billing App")
 st.write(f"📅 Date: {datetime.date.today().strftime('%d-%m-%Y')}")
 
-# --- Sidebar Product Management ---
+# --- Sidebar: Product Management ---
 st.sidebar.header("🛠️ Manage Products")
 new_product = st.sidebar.text_input("Add new product:")
 if st.sidebar.button("Add Product"):
@@ -44,12 +53,12 @@ if st.sidebar.button("Delete Selected Product"):
     st.success(f"🗑️ Deleted: {delete_product}")
     st.session_state.new_product_added = True
 
-# Rerun if updated
+# Rerun if new product added
 if st.session_state.new_product_added:
     st.session_state.new_product_added = False
     st.experimental_rerun()
 
-# --- Product Entry ---
+# --- Product Entry Section ---
 st.header("📦 Enter Product Details")
 bill_items = {}
 
@@ -58,9 +67,12 @@ for product in st.session_state.products:
     unit_key = f"{product}_unit_type"
     price_key = f"{product}_price"
 
-    st.session_state.setdefault(qty_key, 0)
-    st.session_state.setdefault(unit_key, "")
-    st.session_state.setdefault(price_key, 0.0)
+    if qty_key not in st.session_state:
+        st.session_state[qty_key] = 0
+    if unit_key not in st.session_state:
+        st.session_state[unit_key] = ""
+    if price_key not in st.session_state:
+        st.session_state[price_key] = 0.0
 
     qty = st.number_input(f"{product} - Qty", min_value=0, step=1, key=qty_key)
     unit = st.text_input(f"{product} - Unit (g/L/kg)", key=unit_key)
@@ -70,8 +82,9 @@ for product in st.session_state.products:
         amt = qty * price
         bill_items[product] = (qty, unit, price, amt)
 
-# --- Buttons ---
+# --- Generate / Reset Buttons ---
 col1, col2 = st.columns(2)
+
 with col1:
     if st.button("🧾 Generate Bill"):
         if not bill_items:
@@ -103,8 +116,5 @@ with col1:
 
 with col2:
     if st.button("🔄 Reset Bill"):
-        for product in st.session_state.products:
-            st.session_state[f"{product}_qty"] = 0
-            st.session_state[f"{product}_unit_type"] = ""
-            st.session_state[f"{product}_price"] = 0.0
+        st.session_state.reset = True
         st.experimental_rerun()
