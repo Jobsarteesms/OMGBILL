@@ -2,7 +2,6 @@ import streamlit as st
 import datetime
 from PIL import Image, ImageDraw, ImageFont
 import io
-import urllib.parse
 
 # --- Initialize session state ---
 if "products" not in st.session_state:
@@ -115,63 +114,29 @@ if st.button("Generate Bill"):
     # Generate and display image
     img = create_bill_image(result)
     img_buffer = io.BytesIO()
-    img.save(img_buffer, format="WEBP", quality=40)
+    img.save(img_buffer, format="WEBP", quality=85)
     img_buffer.seek(0)
 
+    # Show image clearly for mobile users
+    st.subheader("🖼️ Bill Image Preview")
+    st.image(img, caption="Preview - Long press to save or copy", use_container_width=True)
+
+    # Allow download
     st.download_button(
-        label="Download Compressed Bill as WEBP",
+        label="📥 Download Bill Image",
         data=img_buffer.getvalue(),
         file_name="bill.webp",
         mime="image/webp"
     )
 
-    # --- Share Instructions ---
+    # Instructions for manual sharing
     st.markdown("---")
-    st.subheader("📤 Share Your Bill Image")
+    st.subheader("📤 How to Share the Bill")
 
-    st.markdown("✅ Download the bill above and share it via your preferred app:")
-
-    # Create a shareable message with the download link for WhatsApp, email, and SMS
-    bill_image_link = "https://your-app-link-to-bill-image"  # You can provide a link to your hosted image here, if needed.
-
-    # WhatsApp Web Share Link
-    whatsapp_message = f"Here's the bill from Om Guru Store: {bill_image_link}"
-    whatsapp_url = f"https://web.whatsapp.com/send?text={urllib.parse.quote(whatsapp_message)}"
-
-    # Email Share Link
-    email_subject = "Om Guru Store - Bill"
-    email_body = f"Hi, \n\nHere’s your bill from Om Guru Store: {bill_image_link}\n\nThank you for your purchase!"
-    email_url = f"mailto:?subject={urllib.parse.quote(email_subject)}&body={urllib.parse.quote(email_body)}"
-
-    # SMS Share Link
-    sms_message = f"Here's your bill from Om Guru Store: {bill_image_link}"
-    sms_url = f"sms:?body={urllib.parse.quote(sms_message)}"
-
-    col1, col2, col3 = st.columns(3)
-
-    # WhatsApp
-    with col1:
-        st.markdown(
-            f'<a href="{whatsapp_url}" target="_blank">'
-            f'<img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" width="40"></a><br><small>WhatsApp</small>',
-            unsafe_allow_html=True
-        )
-
-    # Email
-    with col2:
-        st.markdown(
-            f'<a href="{email_url}" target="_blank">'
-            f'<img src="https://upload.wikimedia.org/wikipedia/commons/4/4e/Gmail_Icon.png" width="40"></a><br><small>Gmail</small>',
-            unsafe_allow_html=True
-        )
-
-    # SMS
-    with col3:
-        st.markdown(
-            f'<a href="{sms_url}" target="_blank">'
-            f'<img src="https://upload.wikimedia.org/wikipedia/commons/8/83/SMS_Icon.png" width="40"></a><br><small>Messages</small>',
-            unsafe_allow_html=True
-        )
-
-    # Instructions for the user
-    st.info("After clicking the appropriate icon, follow the prompts to share the image.")
+    st.markdown("""
+    **To share on WhatsApp, Email, or Messages (from mobile):**
+    1. **Long-press the image above**
+    2. Choose **Copy Image** or **Download Image**
+    3. Open WhatsApp or any messaging app
+    4. **Paste or attach** the image and send
+    """)
