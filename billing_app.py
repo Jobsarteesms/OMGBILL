@@ -114,7 +114,7 @@ if st.button("Generate Bill"):
     img.save(img_buffer, format="WEBP", quality=90)
     img_buffer.seek(0)
 
-    st.image(img, caption="🧾 Preview of Generated Bill", use_column_width="always")
+    st.image(img, caption="🧾 Preview of Generated Bill", use_container_width=True)
 
     st.download_button(
         label="📥 Download Bill Image (WEBP)",
