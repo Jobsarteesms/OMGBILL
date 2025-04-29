@@ -52,14 +52,35 @@ if st.session_state.new_product_added:
 # --- Product Input Form ---
 st.header("📦 Enter Product Details")
 bill_items = {}
+
+# Collect product inputs
 for product in st.session_state.products:
-    qty = st.number_input(f"{product} - Qty", min_value=0, step=1, key=f"{product}_qty")
-    unit_type = st.text_input(f"{product} - Unit (e.g., g/L)", key=f"{product}_unit_type")
-    price = st.number_input(f"{product} - Price", min_value=0.0, step=0.5, key=f"{product}_price")
-    
+    qty_key = f"{product}_qty"
+    unit_key = f"{product}_unit_type"
+    price_key = f"{product}_price"
+
+    if qty_key not in st.session_state:
+        st.session_state[qty_key] = 0
+    if unit_key not in st.session_state:
+        st.session_state[unit_key] = ""
+    if price_key not in st.session_state:
+        st.session_state[price_key] = 0.0
+
+    qty = st.number_input(f"{product} - Qty", min_value=0, step=1, key=qty_key)
+    unit_type = st.text_input(f"{product} - Unit (e.g., g/L)", key=unit_key)
+    price = st.number_input(f"{product} - Price", min_value=0.0, step=0.5, key=price_key)
+
     if qty > 0 and price > 0:
         amt = qty * price
         bill_items[product] = (qty, unit_type, price, amt)
+
+# --- Reset Button ---
+if st.button("🔄 Reset Bill"):
+    for product in st.session_state.products:
+        st.session_state[f"{product}_qty"] = 0
+        st.session_state[f"{product}_unit_type"] = ""
+        st.session_state[f"{product}_price"] = 0.0
+    st.experimental_rerun()
 
 # --- Bill Output ---
 if st.button("Generate Bill"):
