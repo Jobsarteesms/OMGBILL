@@ -12,14 +12,14 @@ if "products" not in st.session_state:
 if "new_product_added" not in st.session_state:
     st.session_state.new_product_added = False
 
-# --- App Title ---
-st.title("🛒 Om Guru Store - Billing App")
-st.write(f"Date: {datetime.date.today().strftime('%d-%m-%Y')}")
+st.set_page_config(layout="centered")
 
-# --- Add/Edit/Delete Products ---
+st.title("🛒 Om Guru Store - Billing App")
+st.write(f"📅 Date: {datetime.date.today().strftime('%d-%m-%Y')}")
+
+# --- Sidebar: Add/Edit/Delete Products ---
 st.sidebar.header("🛠️ Manage Products")
 
-# Add product
 new_product = st.sidebar.text_input("Add new product:")
 if st.sidebar.button("Add Product"):
     if new_product and new_product not in st.session_state.products:
@@ -31,7 +31,6 @@ if st.sidebar.button("Add Product"):
     else:
         st.error("Enter a valid product name.")
 
-# Edit product
 edit_product = st.sidebar.selectbox("Edit product:", options=st.session_state.products)
 edited_name = st.sidebar.text_input("New name for selected product:")
 if st.sidebar.button("Edit Selected Product"):
@@ -43,24 +42,22 @@ if st.sidebar.button("Edit Selected Product"):
     else:
         st.warning("Please enter a new name.")
 
-# Delete product
 delete_product = st.sidebar.selectbox("Delete product:", options=st.session_state.products)
 if st.sidebar.button("Delete Selected Product"):
     st.session_state.products.remove(delete_product)
     st.success(f"Deleted: {delete_product}")
     st.session_state.new_product_added = True
 
-# Handle safe rerun
 if st.session_state.get("new_product_added"):
     st.session_state.new_product_added = False
     st.experimental_rerun()
 
-# --- Product Entry Section ---
-st.header("Enter Product Details:")
+# --- Main Form: Product Entry ---
+st.header("📦 Product Details:")
 
 bill_items = {}
 for product in st.session_state.products:
-    qty = st.number_input(f"{product} - Unit Numbers", min_value=0, step=1, key=f"{product}_qty")
+    qty = st.number_input(f"{product} - Quantity", min_value=0, step=1, key=f"{product}_qty")
     unit_type = st.text_input(f"{product} - Unit Type (e.g., grams/liters)", key=f"{product}_unit_type")
     price_per_unit = st.number_input(f"{product} - Price per unit", min_value=0.0, step=0.5, key=f"{product}_price")
 
@@ -68,7 +65,7 @@ for product in st.session_state.products:
         total_price = qty * price_per_unit
         bill_items[product] = (qty, unit_type, price_per_unit, total_price)
 
-# --- Generate Image Bill ---
+# --- Generate Image Function ---
 def create_bill_image(bill_text):
     lines = bill_text.count('\n') + 1
     height = max(1000, 40 * lines)
@@ -89,12 +86,12 @@ def create_bill_image(bill_text):
 
     return img
 
-# --- Generate Bill Button ---
+# --- Bill Generation Section ---
 if st.button("Generate Bill"):
-    st.subheader("🧾 Bill Summary")
+    st.subheader("🧾 Final Bill Summary")
     total = 0
     bill_text = []
-    bill_text.append("------ Om Guru Store ------")
+    bill_text.append("              OM GURU STORE              ")
     bill_text.append(f"Date: {datetime.date.today().strftime('%d-%m-%Y')}")
     bill_text.append("-" * 80)
     bill_text.append(f"{'Product':20} {'Qty':>5} {'Unit':>10} {'Price':>8} {'Total':>10}")
@@ -114,35 +111,42 @@ if st.button("Generate Bill"):
     # Generate and display image
     img = create_bill_image(result)
     img_buffer = io.BytesIO()
-    img.save(img_buffer, format="WEBP", quality=40)
+    img.save(img_buffer, format="WEBP", quality=90)
     img_buffer.seek(0)
 
+    st.image(img, caption="🧾 Preview of Generated Bill", use_column_width="always")
+
     st.download_button(
-        label="Download Compressed Bill as WEBP",
+        label="📥 Download Bill Image (WEBP)",
         data=img_buffer.getvalue(),
-        file_name="bill.webp",
+        file_name="OmGuruStore_Bill.webp",
         mime="image/webp"
     )
 
-    # --- Share Option without pyperclip ---
-    st.subheader("📤 Share Bill")
+    # --- Share Instructions ---
+    st.markdown("---")
+    st.subheader("📤 Share Your Bill Image")
 
-    st.write("📋 **Copy the Bill Text Below:**")
-    st.text_area("Bill Text (Select and Copy manually):", result, height=300)
-
-    st.markdown("### 📱 Choose an App to Paste the Bill:")
+    st.markdown("✅ Download the bill above and share it via your preferred app:")
 
     col1, col2, col3 = st.columns(3)
     with col1:
-        st.markdown("[![WhatsApp](https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg)](https://wa.me/)", unsafe_allow_html=True)
-        st.caption("Open WhatsApp")
-
+        st.markdown(
+            f'<a href="https://web.whatsapp.com/" target="_blank">'
+            f'<img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" width="40"></a><br><small>WhatsApp</small>',
+            unsafe_allow_html=True
+        )
     with col2:
-        st.markdown("[![Gmail](https://upload.wikimedia.org/wikipedia/commons/4/4e/Gmail_Icon.png)](mailto:)", unsafe_allow_html=True)
-        st.caption("Open Gmail")
-
+        st.markdown(
+            f'<a href="mailto:" target="_blank">'
+            f'<img src="https://upload.wikimedia.org/wikipedia/commons/4/4e/Gmail_Icon.png" width="40"></a><br><small>Gmail</small>',
+            unsafe_allow_html=True
+        )
     with col3:
-        st.markdown("[![Messages](https://upload.wikimedia.org/wikipedia/commons/8/83/SMS_Icon.png)](sms:)", unsafe_allow_html=True)
-        st.caption("Open SMS/Messages")
+        st.markdown(
+            f'<a href="sms:" target="_blank">'
+            f'<img src="https://upload.wikimedia.org/wikipedia/commons/8/83/SMS_Icon.png" width="40"></a><br><small>Messages</small>',
+            unsafe_allow_html=True
+        )
 
-    st.info("✅ After copying the bill, paste it into WhatsApp, Gmail, or Messages.")
+    st.info("After downloading the image, open WhatsApp/Gmail/Messages and attach the image to share it.")
