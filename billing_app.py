@@ -17,7 +17,7 @@ if "reset" in st.session_state and st.session_state.reset:
         st.session_state[f"{product}_unit_type"] = ""
         st.session_state[f"{product}_price"] = 0.0
     st.session_state.reset = False
-    st.experimental_rerun()
+    st.rerun()
 
 # --- Title and Date ---
 st.title("🧾 Om Guru Store - Billing App")
@@ -117,4 +117,4 @@ with col1:
 with col2:
     if st.button("🔄 Reset Bill"):
         st.session_state.reset = True
-        st.experimental_rerun()
+        st.rerun()
