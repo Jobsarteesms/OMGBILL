@@ -3,102 +3,69 @@ import datetime
 from PIL import Image, ImageDraw, ImageFont
 import io
 
-# Store selected products and their details
-if 'products' not in st.session_state:
-    st.session_state.products = []
+# Initialize products
+products = [
+    "Gingerly Oil", "Groundnut Oil", "Coconut Oil", "Cow Ghee",
+    "Cow Butter", "Buffalo Butter", "Deebam Oil", "Vadagam"
+]
 
 # App title
 st.title("🛒 Om Guru Store - Billing App")
 st.write(f"Date: {datetime.date.today().strftime('%d-%m-%Y')}")
 
-# Input fields for adding products
+# Add new product
+new_product = st.text_input("Add a new product (optional):")
+if new_product:
+    products.append(new_product)
+
 st.header("Enter Product Details:")
 
-# Form to add a new product
-with st.form(key="product_form"):
-    product_name = st.text_input("Product Name:")
-    qty_type = st.text_input("Quantity Type (e.g., 500g, 1 liter):")
-    num_pieces = st.number_input("Number of Pieces (e.g., 1, 5):", min_value=0, step=1)
-    price_per_piece = st.number_input("Price per Piece (₹):", min_value=0.0, step=0.5)
+# Input product quantities and prices
+bill_items = {}
+for product in products:
+    qty = st.number_input(f"{product} - Quantity", min_value=0, step=1, key=f"{product}_qty")
+    price_per_unit = st.number_input(f"{product} - Price per unit", min_value=0.0, step=0.5, key=f"{product}_price")
+    if qty > 0 and price_per_unit > 0:
+        total_price = qty * price_per_unit
+        bill_items[product] = (qty, price_per_unit, total_price)
 
-    # Submit button to add product
-    submit_button = st.form_submit_button(label="Add Product")
+# Function to create Image from bill
+def create_bill_image(bill_text):
+    lines = bill_text.count('\n') + 1
+    height = max(1000, 40 * lines)
+    width = 800
 
-    if submit_button and product_name and qty_type and num_pieces > 0 and price_per_piece > 0:
-        # Add product to the session state list
-        st.session_state.products.append({
-            "product_name": product_name,
-            "qty_type": qty_type,
-            "num_pieces": num_pieces,
-            "price_per_piece": price_per_piece
-        })
-        st.success(f"Product '{product_name}' added successfully!")
+    img = Image.new('RGB', (width, height), color='white')
+    d = ImageDraw.Draw(img)
 
-# Display current product list with options to edit or delete
-if st.session_state.products:
-    st.subheader("Current Products:")
-    for i, product in enumerate(st.session_state.products):
-        product_name = product["product_name"]
-        qty_type = product["qty_type"]
-        num_pieces = product["num_pieces"]
-        price_per_piece = product["price_per_piece"]
-        total_price = num_pieces * price_per_piece
+    try:
+        font = ImageFont.truetype("arial.ttf", 20)
+    except:
+        font = ImageFont.load_default()
 
-        # Display product details
-        st.write(f"**{product_name}** - {qty_type} - {num_pieces} pieces - ₹{price_per_piece:.2f} each - Total: ₹{total_price:.2f}")
+    y_text = 20
+    for line in bill_text.split('\n'):
+        d.text((40, y_text), line, font=font, fill=(0, 0, 0))
+        y_text += 30
 
-        # Edit or Delete buttons
-        col1, col2 = st.columns(2)
-        with col1:
-            edit_button = st.button("Edit", key=f"edit_{i}")
-        with col2:
-            delete_button = st.button("Delete", key=f"delete_{i}")
-
-        if edit_button:
-            # Allow editing the selected product's details
-            new_product_name = st.text_input(f"Edit Product Name (Current: {product_name}):", value=product_name)
-            new_qty_type = st.text_input(f"Edit Quantity Type (Current: {qty_type}):", value=qty_type)
-            new_num_pieces = st.number_input(f"Edit Number of Pieces (Current: {num_pieces}):", min_value=0, step=1, value=num_pieces)
-            new_price_per_piece = st.number_input(f"Edit Price per Piece (Current: ₹{price_per_piece}):", min_value=0.0, step=0.5, value=price_per_piece)
-
-            if st.button(f"Save Edit for {product_name}", key=f"save_edit_{i}"):
-                st.session_state.products[i] = {
-                    "product_name": new_product_name,
-                    "qty_type": new_qty_type,
-                    "num_pieces": new_num_pieces,
-                    "price_per_piece": new_price_per_piece
-                }
-                st.success(f"Product '{new_product_name}' edited successfully!")
-
-        if delete_button:
-            # Delete product from the list
-            del st.session_state.products[i]
-            st.success(f"Product '{product_name}' deleted successfully!")
+    return img
 
 # Generate Bill
-if st.button("Generate & Share Bill"):
+if st.button("Generate Bill"):
     st.subheader("🧾 Bill Summary:")
-
     total = 0
     bill_text = []
     bill_text.append(f"------ Om Guru Store ------")
     bill_text.append(f"Date: {datetime.date.today().strftime('%d-%m-%Y')}")
-    bill_text.append("-" * 80)
-    bill_text.append(f"{'Product Name':30} {'Qty Type':>15} {'Qty':>10} {'Price per Piece':>20} {'Total':>15}")
-    bill_text.append("-" * 80)
-
-    for product in st.session_state.products:
-        product_name = product["product_name"]
-        qty_type = product["qty_type"]
-        num_pieces = product["num_pieces"]
-        price_per_piece = product["price_per_piece"]
-        line_total = num_pieces * price_per_piece
-        bill_text.append(f"{product_name:30} {qty_type:15} {num_pieces:10} {price_per_piece:20.2f} {line_total:15.2f}")
+    bill_text.append("-" * 40)
+    bill_text.append(f"{'Product':20} {'Qty':>5} {'Unit':>6} {'Total':>8}")
+    bill_text.append("-" * 40)
+    for product, (qty, price, line_total) in bill_items.items():
+        bill_text.append(f"{product:20} {qty:5} {price:6.2f} {line_total:8.2f}")
         total += line_total
-
-    bill_text.append("-" * 80)
-    bill_text.append(f"{'Total':50} {total:15.2f}")
-    bill_text.append("-" * 80)
+    bill_text.append("-" * 40)
+    bill_text.append(f"{'Total':30} {total:8.2f}")
+    bill_text.append("-" * 40)
 
     bill_result = "\n".join(bill_text)
     st.text(bill_result)
@@ -111,33 +78,35 @@ if st.button("Generate & Share Bill"):
     img.save(img_buffer, format="WEBP", quality=40)  # WEBP instead of JPEG
     img_buffer.seek(0)
 
-    # Show Share Options after click
-    share_option = st.selectbox("Select Share Method:", ["WhatsApp", "Gmail", "Copy Text"])
-
-    # Collect phone/email for sharing
-    phone_or_email = st.text_input("Enter Phone (with country code) or Email:")
-
-    # Generate Shareable Link
-    if st.button("Generate Share Link"):
-        if not phone_or_email:
-            st.error("Please enter a Phone number or Email address.")
-        else:
-            if share_option == "WhatsApp":
-                whatsapp_url = f"https://api.whatsapp.com/send?phone={phone_or_email}&text={bill_result}"
-                st.markdown(f"[Click here to Share on WhatsApp]({whatsapp_url})", unsafe_allow_html=True)
-
-            elif share_option == "Gmail":
-                gmail_url = f"mailto:{phone_or_email}?subject=Om%20Guru%20Store%20Bill&body={bill_result}"
-                st.markdown(f"[Click here to Share via Gmail]({gmail_url})", unsafe_allow_html=True)
-
-            elif share_option == "Copy Text":
-                st.markdown("Copy this bill text and paste manually into other apps:")
-                st.code(bill_result)
-
-    # If user does not want to share, show download button
     st.download_button(
         label="Download Compressed Bill as WEBP",
         data=img_buffer.getvalue(),
         file_name="bill.webp",
         mime="image/webp"
     )
+
+    # --- Share Button ---
+    if st.button("📤 Share Bill"):
+        # Show only after click
+        st.markdown("### Choose How to Share:")
+        share_option = st.selectbox("Select Share Method:", ["WhatsApp", "Gmail", "Others"])
+
+        phone_or_email = st.text_input("Enter Phone (with country code) or Email:")
+
+        share_message = bill_result.replace(' ', '%20').replace('\n', '%0A')
+
+        if st.button("Generate Share Link"):
+            if not phone_or_email:
+                st.error("Please enter a Phone number or Email address.")
+            else:
+                if share_option == "WhatsApp":
+                    whatsapp_url = f"https://api.whatsapp.com/send?phone={phone_or_email}&text={share_message}"
+                    st.markdown(f"[Click here to Share on WhatsApp]({whatsapp_url})", unsafe_allow_html=True)
+
+                elif share_option == "Gmail":
+                    gmail_url = f"mailto:{phone_or_email}?subject=Om%20Guru%20Store%20Bill&body={share_message}"
+                    st.markdown(f"[Click here to Share via Gmail]({gmail_url})", unsafe_allow_html=True)
+
+                else:  # Others
+                    st.markdown("Copy this bill text and paste manually into other apps:")
+                    st.code(bill_result)
